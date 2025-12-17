@@ -13,6 +13,7 @@ from app.schemas.question import (
     QuestionUpdateRequest,
 )
 from app.models.question import Question, AnswerType, QuestionCategory
+from app.services.conditional_logic import ConditionalLogicService
 
 router = APIRouter()
 
@@ -200,3 +201,73 @@ async def deactivate_question(
     db.refresh(question)
 
     return question
+
+
+@router.get("/applicable/{startup_id}", response_model=List[QuestionSchema])
+async def get_applicable_questions(
+    startup_id: UUID,
+    category: Optional[QuestionCategory] = Query(None, description="Filter by category"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get questions applicable to a specific startup based on conditional logic
+
+    This endpoint returns only the questions that should be shown to this startup based on:
+    - Their current stage
+    - Their previous answers
+    - Conditional logic rules (e.g., skip team questions for solo founders)
+
+    This is the RECOMMENDED endpoint for taking assessments as it provides
+    a personalized question set.
+    """
+    service = ConditionalLogicService(db)
+    questions = service.get_applicable_questions(
+        startup_id=startup_id,
+        category=category
+    )
+    return questions
+
+
+@router.get("/next/{startup_id}", response_model=List[QuestionSchema])
+async def get_next_questions(
+    startup_id: UUID,
+    count: int = Query(10, ge=1, le=50, description="Number of questions to return"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the next unanswered questions for a startup
+
+    Returns the next batch of questions that:
+    1. Haven't been answered yet
+    2. Are applicable based on conditional logic
+    3. Are ordered by priority/category
+
+    Perfect for progressive assessment flows.
+    """
+    service = ConditionalLogicService(db)
+    questions = service.get_next_unanswered_questions(
+        startup_id=startup_id,
+        count=count
+    )
+    return questions
+
+
+@router.get("/progress/{startup_id}")
+async def get_assessment_progress(
+    startup_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """
+    Get assessment progress for a startup
+
+    Returns:
+    - Total applicable questions
+    - Number answered
+    - Progress percentage
+    - Progress by category
+
+    Use this to show progress bars and completion status.
+    """
+    service = ConditionalLogicService(db)
+    progress = service.get_progress(startup_id)
+    return progress

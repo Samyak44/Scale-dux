@@ -22,6 +22,7 @@ from .api import (
     investor_preferences,
     matches,
     industries,
+    data_import,
 )
 from .config.settings import get_settings
 
@@ -155,6 +156,13 @@ app.include_router(
     industries.router,
     prefix=f"{settings.API_V1_PREFIX}/industries",
     tags=["Industries"]
+)
+
+# Data Import routers
+app.include_router(
+    data_import.router,
+    prefix=f"{settings.API_V1_PREFIX}/data",
+    tags=["Data Import"]
 )
 
 
