@@ -1,0 +1,116 @@
+# Fatal Flags Configuration
+# Rules that impose penalties and caps on the final SCORE
+
+version: "1.0.0"
+
+fatal_flags:
+  - flag_id: no_incorporation
+    trigger_kpi: legal_incorporation_status
+    trigger_condition: "value == false"
+    penalty_points: 150
+    global_cap: 400
+    severity: critical
+    reason: "Company not legally incorporated"
+    user_message: "Your startup must be legally incorporated to be investment-ready. This is a critical blocker."
+    cascade_effects:
+      - category: legal
+        effect: auto_red
+        message: "Legal category blocked until incorporation completed"
+      - category: execution
+        effect: reduce_confidence
+        reduction_factor: 0.30
+
+  - flag_id: no_fulltime_founder
+    trigger_kpi: fc_fulltime_founder
+    trigger_condition: "value == false"
+    penalty_points: 100
+    global_cap: 550
+    severity: warning
+    reason: "No founder working full-time reduces execution credibility"
+    user_message: "At least one founder must be working full-time to demonstrate commitment."
+    cascade_effects:
+      - category: execution
+        sub_category: role_clarity
+        effect: auto_red
+      - category: milestones
+        sub_category: goal_setting
+        effect: block_all
+        message: "Cannot set realistic milestones without full-time execution owner"
+
+  - flag_id: no_cofounder_agreement
+    trigger_kpi: fc_equity_split_documented
+    trigger_condition: "documented == false"
+    penalty_points: 75
+    global_cap: 700
+    severity: warning
+    reason: "Undocumented equity split creates high co-founder conflict risk"
+    user_message: "Document your equity split in a Founders' Agreement to prevent future disputes."
+    cascade_effects:
+      - category: team
+        sub_category: team_dynamics
+        effect: auto_yellow
+        message: "Team stability at risk without formal agreements"
+
+  - flag_id: zero_ownership_clarity
+    trigger_kpi: legal_cap_table_clarity
+    trigger_condition: "clarity_percentage == 0"
+    penalty_points: 100
+    global_cap: 500
+    severity: critical
+    reason: "Cap table issues are toxic to VCs"
+    user_message: "Your cap table must be clean and transparent. Resolve all ownership ambiguities immediately."
+
+  - flag_id: misaligned_vision
+    trigger_kpi: vm_shared_vision
+    trigger_condition: "value == false"
+    penalty_points: 50
+    global_cap: 600
+    severity: warning
+    reason: "Misaligned founder vision causes strategic drift"
+    user_message: "All founders must align on the long-term vision. Schedule a vision alignment workshop."
+    cascade_effects:
+      - category: market
+        sub_category: problem_definition
+        effect: auto_yellow
+        message: "Problem definition likely inconsistent across founders"
+      - category: milestones
+        sub_category: long_term_goals
+        effect: block_all
+
+  - flag_id: no_tech_cofounder_at_traction
+    trigger_kpi: fc_technical_cofounder_present
+    trigger_condition: "value == false AND stage IN (mvp_early_traction, growth, scale)"
+    penalty_points: 0
+    global_cap: 550
+    severity: critical
+    reason: "Cannot scale a tech product without technical leadership"
+    user_message: "You must have a technical co-founder or CTO to execute on your product roadmap."
+    cascade_effects:
+      - category: solution
+        sub_category: scalability
+        effect: auto_red
+      - category: execution
+        sub_category: tech_implementation
+        effect: auto_red
+      - category: milestones
+        sub_category: product_milestones
+        effect: block_all
+
+  - flag_id: low_runway_crisis
+    trigger_kpi: fc_personal_financial_runway_months
+    trigger_condition: "value < 3"
+    penalty_points: 50
+    global_cap: null
+    severity: warning
+    reason: "Low runway forces short-term thinking and rushed decisions"
+    user_message: "Your personal runway is critically low. Secure bridge funding or reduce burn immediately."
+    cascade_effects:
+      - category: execution
+        sub_category: budget_allocation
+        effect: auto_yellow
+        message: "Budget planning constrained by low runway"
+
+# Metadata
+total_flags: 7
+max_possible_penalty: 525  # Sum of all penalty_points
+most_restrictive_cap: 400  # Lowest global_cap value

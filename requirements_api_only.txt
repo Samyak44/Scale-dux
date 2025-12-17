@@ -1,0 +1,9 @@
+# Latest versions with Python 3.13 support (prebuilt wheels)
+
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-multipart
+python-dateutil
+pyyaml

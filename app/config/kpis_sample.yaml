@@ -1,0 +1,448 @@
+# SCORE™ KPI Configuration - Team Category (Sample)
+# Based on ScaleDux KPI structure
+
+version: "1.0.0"
+
+categories:
+  team:
+    # Stage-specific weights
+    weight_mvp_no_traction: 0.40
+    weight_mvp_early_traction: 0.30
+
+    sub_categories:
+      founder_commitment:
+        weight: 0.23
+        kpis:
+          fc_fulltime_founder:
+            question: "Is at least one founder working full-time on the startup (not employed elsewhere)?"
+            type: boolean
+            priority: core
+            base_weight: 0.18
+            stage_multiplier:
+              mvp_no_traction: 1.3
+              mvp_early_traction: 1.0
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                red: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                red: "value == false"
+            confidence_method:
+              self_reported: 0.6
+              linkedin_verified: 0.9
+              document_uploaded: 1.0
+            fatal_flag:
+              is_fatal: true
+              condition: "value == false"
+              cascade_impact:
+                - category: execution
+                  sub_category: role_clarity
+                  effect: auto_red
+                - category: milestones
+                  sub_category: goal_setting
+                  effect: block_all
+
+          fc_personal_financial_runway_months:
+            question: "How many months of personal financial runway does the full-time founder have?"
+            type: number
+            priority: core
+            base_weight: 0.15
+            stage_multiplier:
+              mvp_no_traction: 1.4
+              mvp_early_traction: 0.9
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value >= 6"
+                yellow: "3 <= value < 6"
+                red: "value < 3"
+              mvp_early_traction:
+                green: "value >= 3"
+                yellow: "1 <= value < 3"
+                red: "value < 1"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.95  # Bank statement
+              ca_verified: 1.0
+            warning_flag:
+              condition: "value < 3"
+              message: "Low runway increases execution risk"
+
+          fc_notice_period_remaining_weeks:
+            question: "If any founder is currently employed, how many weeks of notice period remain?"
+            type: number
+            priority: recommended
+            base_weight: 0.06
+            stage_multiplier:
+              mvp_no_traction: 1.2
+              mvp_early_traction: 0.8
+            universal: true
+            skip_condition:
+              kpi_id: fc_fulltime_founder
+              value: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value <= 4"
+                yellow: "4 < value <= 8"
+                red: "value > 8"
+              mvp_early_traction:
+                green: "value <= 2"
+                yellow: "2 < value <= 6"
+                red: "value > 6"
+            confidence_method:
+              self_reported: 0.7
+              document_uploaded: 1.0  # Employment contract
+
+          fc_cofounder_equity_locked:
+            question: "Has co-founder equity been locked with a standard vesting schedule (4-year vest with 1-year cliff)?"
+            type: boolean
+            priority: core
+            base_weight: 0.10
+            stage_multiplier:
+              mvp_no_traction: 0.9
+              mvp_early_traction: 1.3
+            conditional: true
+            conditional_trigger:
+              founder_structure: "!= solo_founder"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 1.0  # SHA/vesting agreement
+
+          fc_equity_split_documented:
+            question: "What is the equity split (%) among founders? Is it formally documented?"
+            type: composite  # Split % + boolean documented
+            priority: core
+            base_weight: 0.11
+            stage_multiplier:
+              mvp_no_traction: 1.1
+              mvp_early_traction: 1.3
+            conditional: true
+            conditional_trigger:
+              founder_structure: "!= solo_founder"
+            scoring_logic:
+              mvp_no_traction:
+                green: "documented == true AND rationale_clear == true"
+                yellow: "documented == false"
+                red: "split_agreed == false"
+              mvp_early_traction:
+                green: "documented == true"
+                red: "documented == false OR unequal_no_rationale == true"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 1.0  # Founders' Agreement or SHA
+            warning_flag:
+              condition: "documented == false OR unequal_no_rationale == true"
+              message: "Equity disputes are a leading cause of co-founder breakup"
+
+          fc_founder_financial_investment:
+            question: "How much personal capital (₹) have the founders collectively invested?"
+            type: number
+            priority: recommended
+            base_weight: 0.09
+            stage_multiplier:
+              mvp_no_traction: 1.2
+              mvp_early_traction: 1.1
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value >= 200000 per founder"
+                yellow: "50000 <= value < 200000 per founder"
+                red: "value < 50000 per founder"
+              mvp_early_traction:
+                green: "value >= 500000 collective"
+                yellow: "200000 <= value < 500000"
+                red: "value < 200000"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.95  # Bank transfer receipts
+              ca_verified: 1.0
+
+          fc_priorities_clear:
+            question: "Are the founder's weekly time allocation and priorities clearly defined?"
+            type: boolean
+            priority: recommended
+            base_weight: 0.06
+            stage_multiplier:
+              mvp_no_traction: 1.1
+              mvp_early_traction: 1.0
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.6
+              document_uploaded: 0.9  # Tracker screenshot
+
+          fc_technical_cofounder_present:
+            question: "Is there a technical co-founder with prior SaaS development experience?"
+            type: boolean
+            priority: core
+            base_weight: 0.14
+            stage_multiplier:
+              mvp_no_traction: 1.1
+              mvp_early_traction: 1.4
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                red: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              linkedin_verified: 0.95  # LinkedIn + GitHub
+              reference_check: 1.0
+            fatal_flag:
+              is_fatal: true
+              condition: "value == false AND stage == mvp_early_traction"
+              cascade_impact:
+                - category: solution
+                  sub_category: scalability
+                  effect: auto_red
+                - category: execution
+                  sub_category: tech_implementation
+                  effect: auto_red
+
+          fc_gtm_experience:
+            question: "Does any founder have prior go-to-market experience in SaaS?"
+            type: boolean
+            priority: recommended
+            base_weight: 0.07
+            stage_multiplier:
+              mvp_no_traction: 0.9
+              mvp_early_traction: 1.2
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              linkedin_verified: 0.85
+              reference_check: 1.0
+
+          fc_saas_pricing_experience:
+            question: "Does the founding team have experience designing SaaS pricing models?"
+            type: boolean
+            priority: core
+            base_weight: 0.09
+            stage_multiplier:
+              mvp_no_traction: 0.8
+              mvp_early_traction: 1.3
+            conditional: true
+            conditional_trigger:
+              business_model: "IN (b2b_saas_enterprise, b2b_saas_midmarket, b2b_saas_smb, b2c_saas_consumer)"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.9  # Portfolio/case study
+              reference_check: 1.0
+
+          fc_saas_unit_economics_literacy:
+            question: "Does at least one founder understand core SaaS unit economics (LTV, CAC, Payback Period)?"
+            type: boolean
+            priority: core
+            base_weight: 0.10
+            stage_multiplier:
+              mvp_no_traction: 0.9
+              mvp_early_traction: 1.3
+            conditional: true
+            conditional_trigger:
+              business_model: "IN (b2b_saas_enterprise, b2b_saas_midmarket, b2b_saas_smb, b2c_saas_consumer)"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                red: "value == false"
+            confidence_method:
+              self_reported: 0.4
+              linkedin_verified: 1.0  # Prior SaaS finance role
+              assessment_score: 0.85  # Quiz/assessment >75%
+
+          fc_solo_advisory_board_strength:
+            question: "[SOLO ONLY] Do you have a committed advisory board (≥2 advisors)?"
+            type: boolean
+            priority: core
+            base_weight: 0.14
+            stage_multiplier:
+              mvp_no_traction: 1.3
+              mvp_early_traction: 1.2
+            conditional: true
+            conditional_trigger:
+              founder_structure: "== solo_founder"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                red: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.95  # Advisor agreements
+
+          fc_solo_execution_bandwidth_plan:
+            question: "[SOLO ONLY] Do you have a documented plan for managing execution bandwidth?"
+            type: boolean
+            priority: core
+            base_weight: 0.11
+            stage_multiplier:
+              mvp_no_traction: 1.2
+              mvp_early_traction: 1.1
+            conditional: true
+            conditional_trigger:
+              founder_structure: "== solo_founder"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.6
+              document_uploaded: 0.95  # Execution plan document
+
+      vision_mission:
+        weight: 0.16
+        kpis:
+          vm_shared_vision:
+            question: "Do all founders share the same long-term vision (5-10 year outcome)?"
+            type: boolean
+            priority: core
+            base_weight: 0.28
+            stage_multiplier:
+              mvp_no_traction: 1.2
+              mvp_early_traction: 1.0
+            conditional: true
+            conditional_trigger:
+              founder_structure: "!= solo_founder"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                red: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              interview_convergence: 0.95  # Separate founder interviews
+            fatal_flag:
+              is_fatal: true
+              condition: "value == false"
+              message: "Misaligned vision blocks long-term planning"
+
+          vm_problem_solution_thesis:
+            question: "Is there a clearly articulated problem-solution thesis?"
+            type: boolean
+            priority: core
+            base_weight: 0.25
+            stage_multiplier:
+              mvp_no_traction: 1.2
+              mvp_early_traction: 1.1
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.95  # Written thesis document
+
+          vm_story_pitch_ready:
+            question: "Is a compelling pitch deck ready for investors?"
+            type: boolean
+            priority: recommended
+            base_weight: 0.17
+            stage_multiplier:
+              mvp_no_traction: 0.8
+              mvp_early_traction: 1.3
+            universal: true
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.5
+              document_uploaded: 0.85  # Pitch deck
+              investor_feedback: 1.0
+
+          vm_saas_vision_scalability:
+            question: "Does the vision address SaaS scalability elements (global market, multi-tenant architecture)?"
+            type: boolean
+            priority: recommended
+            base_weight: 0.15
+            stage_multiplier:
+              mvp_no_traction: 0.9
+              mvp_early_traction: 1.2
+            conditional: true
+            conditional_trigger:
+              business_model: "IN (b2b_saas_enterprise, b2b_saas_midmarket, b2b_saas_smb, b2c_saas_consumer)"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value == true"
+                yellow: "value == false"
+              mvp_early_traction:
+                green: "value == true"
+                yellow: "value == false"
+            confidence_method:
+              self_reported: 0.6
+              advisor_review: 0.95
+
+          vm_exit_timeline_intent:
+            question: "What is the founder's intended exit timeline and strategy?"
+            type: enum
+            priority: recommended
+            base_weight: 0.15
+            stage_multiplier:
+              mvp_no_traction: 1.0
+              mvp_early_traction: 1.1
+            conditional: true
+            conditional_trigger:
+              funding_status: "IN (vc_backed_seeking_preseed_seed, vc_backed_seeking_series_a)"
+            scoring_logic:
+              mvp_no_traction:
+                green: "value IN (5to7yr_exit, 10plus_yr_build)"
+                yellow: "value == undecided"
+                red: "value IN (3yr_exit, lifestyle_business)"
+              mvp_early_traction:
+                green: "value IN (5to7yr_exit, 10plus_yr_build)"
+                yellow: "value == undecided"
+                red: "value IN (3yr_exit, lifestyle_business)"
+            confidence_method:
+              self_reported: 0.7
+              investor_discussion_notes: 0.9
+
+# Note: This is a sample configuration for the Team category.
+# Production deployment would include all categories: Market, Solution, Validation, Execution, Legal, etc.

@@ -1,0 +1,166 @@
+# Cross-Category Dependency Rules
+# Implements the Directed Acyclic Graph (DAG) of inter-KPI dependencies
+
+version: "1.0.0"
+
+dependency_rules:
+  # Technical capability dependencies
+  - rule_id: tech_cofounder_caps_solution
+    source_kpi: fc_technical_cofounder_present
+    condition: "value == false"
+    target_category: solution
+    action: apply_cap
+    cap_value: 0.60
+    reason: "No technical co-founder limits solution execution capability to 60%"
+    stage_applicability:
+      - mvp_early_traction
+      - growth
+      - scale
+
+  - rule_id: tech_cofounder_caps_execution
+    source_kpi: fc_technical_cofounder_present
+    condition: "value == false"
+    target_category: execution
+    target_sub_category: tech_implementation_readiness
+    action: apply_cap
+    cap_value: 0.50
+    reason: "Cannot execute on technical roadmap without technical leadership"
+    stage_applicability:
+      - mvp_early_traction
+      - growth
+      - scale
+
+  # GTM capability dependencies
+  - rule_id: no_gtm_caps_validation
+    source_kpi: fc_gtm_experience
+    condition: "value == false"
+    target_category: validation
+    target_sub_category: validation_channels
+    action: reduce_confidence
+    reduction_factor: 0.80
+    reason: "Lack of GTM experience reduces validation strategy quality"
+    stage_applicability:
+      - mvp_early_traction
+      - growth
+
+  # Legal hygiene dependencies
+  - rule_id: incorporation_blocks_funding
+    source_kpi: legal_incorporation_status
+    condition: "value == false"
+    target_category: legal
+    target_sub_category: contractual_readiness
+    action: apply_cap
+    cap_value: 0.0
+    reason: "Cannot sign investment contracts without legal entity"
+    stage_applicability:
+      - mvp_no_traction
+      - mvp_early_traction
+      - growth
+      - scale
+
+  # Equity structure dependencies
+  - rule_id: equity_ambiguity_blocks_fundraising
+    source_kpi: fc_equity_split_documented
+    condition: "documented == false"
+    target_category: legal
+    target_sub_category: equity_vesting
+    action: trigger_flag
+    flag_id: equity_hygiene_gap
+    reason: "Undocumented equity prevents clean cap table for investors"
+
+  # Founder commitment dependencies
+  - rule_id: no_fulltime_blocks_execution
+    source_kpi: fc_fulltime_founder
+    condition: "value == false"
+    target_category: execution
+    target_sub_category: role_clarity
+    action: trigger_flag
+    flag_id: no_fulltime_execution_owner
+    reason: "Execution velocity severely limited without full-time founder"
+
+  - rule_id: low_runway_impacts_milestones
+    source_kpi: fc_personal_financial_runway_months
+    condition: "value < 3"
+    target_category: milestones
+    target_sub_category: goal_setting
+    action: reduce_confidence
+    reduction_factor: 0.70
+    reason: "Low runway forces conservative milestone setting"
+
+  # Vision alignment dependencies
+  - rule_id: vision_misalignment_blocks_strategy
+    source_kpi: vm_shared_vision
+    condition: "value == false"
+    target_category: market
+    target_sub_category: problem_definition
+    action: reduce_confidence
+    reduction_factor: 0.85
+    reason: "Misaligned vision causes inconsistent problem articulation"
+
+  - rule_id: vision_misalignment_blocks_long_term_goals
+    source_kpi: vm_shared_vision
+    condition: "value == false"
+    target_category: milestones
+    target_sub_category: long_term_planning
+    action: apply_cap
+    cap_value: 0.50
+    reason: "Cannot set cohesive 12-month goals with misaligned founders"
+
+  # SaaS-specific dependencies
+  - rule_id: no_saas_pricing_experience_impacts_market
+    source_kpi: fc_saas_pricing_experience
+    condition: "value == false"
+    target_category: market
+    target_sub_category: market_sizing
+    action: reduce_confidence
+    reduction_factor: 0.90
+    reason: "Pricing uncertainty affects TAM/SAM calculations"
+    stage_applicability:
+      - mvp_early_traction
+      - growth
+
+  - rule_id: no_unit_economics_literacy_blocks_growth
+    source_kpi: fc_saas_unit_economics_literacy
+    condition: "value == false"
+    target_category: milestones
+    target_sub_category: success_definition
+    action: reduce_confidence
+    reduction_factor: 0.75
+    reason: "Cannot set realistic ARR/MRR targets without unit economics understanding"
+    stage_applicability:
+      - mvp_early_traction
+      - growth
+      - scale
+
+  # Solo founder-specific dependencies
+  - rule_id: solo_no_advisors_caps_team
+    source_kpi: fc_solo_advisory_board_strength
+    condition: "value == false"
+    target_category: team
+    target_sub_category: skills_capability
+    action: reduce_confidence
+    reduction_factor: 0.80
+    reason: "Solo founders must compensate missing co-founder skills with advisors"
+    conditional_trigger:
+      founder_structure: "== solo_founder"
+
+  - rule_id: solo_no_bandwidth_plan_caps_execution
+    source_kpi: fc_solo_execution_bandwidth_plan
+    condition: "value == false"
+    target_category: execution
+    target_sub_category: execution_feasibility
+    action: reduce_confidence
+    reduction_factor: 0.85
+    reason: "Solo founders must demonstrate structured execution planning"
+    conditional_trigger:
+      founder_structure: "== solo_founder"
+
+# Dependency Graph Metadata
+total_rules: 13
+categories_with_dependencies:
+  - solution
+  - execution
+  - validation
+  - legal
+  - market
+  - milestones

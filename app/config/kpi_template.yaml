@@ -1,0 +1,209 @@
+# ========================================
+# KPI TEMPLATE - Copy this for each question
+# ========================================
+
+# STEP 1: Replace values in ALL_CAPS
+# STEP 2: Delete sections marked [OPTIONAL] if not needed
+# STEP 3: Test with scoring engine
+
+YOUR_KPI_ID_HERE:
+  question: "YOUR QUESTION TEXT HERE?"
+
+  type: CHOOSE_ONE  # boolean, number, text, enum
+
+  priority: CHOOSE_ONE  # core, recommended
+
+  base_weight: 0.XX  # Decimal between 0.0-1.0 (sum in sub-category should = 1.0)
+
+  stage_multiplier:
+    mvp_no_traction: 1.X   # 1.0 = normal, >1.0 = more important, <1.0 = less important
+    mvp_early_traction: 1.X
+
+  universal: true  # true if applies to all startups, false if conditional
+
+  # [OPTIONAL] Only include if universal: false
+  conditional_trigger:
+    kpi_id: "OTHER_KPI_ID"
+    condition: "value == something"
+
+  scoring_logic:
+    mvp_no_traction:
+      green: "CONDITION_FOR_GOOD_ANSWER"   # e.g., "value == true" or "value >= 6"
+      yellow: "CONDITION_FOR_OK_ANSWER"    # [OPTIONAL]
+      red: "CONDITION_FOR_BAD_ANSWER"      # e.g., "value == false" or "value < 3"
+
+    mvp_early_traction:
+      green: "CONDITION_FOR_GOOD_ANSWER"
+      yellow: "CONDITION_FOR_OK_ANSWER"    # [OPTIONAL]
+      red: "CONDITION_FOR_BAD_ANSWER"
+
+  confidence_method:
+    self_reported: 0.6                     # Default: 0.6 (60% confidence)
+    document_uploaded: 1.0                 # Default: 1.0 (full confidence)
+    linkedin_verified: 0.9                 # [OPTIONAL] If you verify via LinkedIn
+    reference_check: 1.0                   # [OPTIONAL] If you call references
+    ca_verified: 1.0                       # [OPTIONAL] If CA verifies financials
+
+  # [OPTIONAL] Only if this is a critical blocker
+  fatal_flag:
+    is_fatal: true
+    condition: "value == false"
+    cascade_impact:
+      - category: AFFECTED_CATEGORY
+        sub_category: AFFECTED_SUBCATEGORY  # [OPTIONAL]
+        effect: CHOOSE_ONE  # auto_red, auto_yellow, block_all
+
+  # [OPTIONAL] Only if question should be skipped based on other answer
+  skip_condition:
+    kpi_id: "OTHER_KPI_ID"
+    value: true  # Skip this question if OTHER_KPI_ID has this value
+
+# ========================================
+# EXAMPLES FOR COMMON QUESTION TYPES
+# ========================================
+
+# EXAMPLE 1: Simple Yes/No Question
+example_boolean:
+  question: "Do you have a co-founder?"
+  type: boolean
+  priority: core
+  base_weight: 0.15
+  stage_multiplier:
+    mvp_no_traction: 1.2
+    mvp_early_traction: 1.0
+  universal: true
+  scoring_logic:
+    mvp_no_traction:
+      green: "value == true"
+      red: "value == false"
+    mvp_early_traction:
+      green: "value == true"
+      red: "value == false"
+  confidence_method:
+    self_reported: 0.6
+    document_uploaded: 0.95  # Co-founder agreement
+
+# EXAMPLE 2: Numeric Question with Ranges
+example_number:
+  question: "How many months of runway do you have?"
+  type: number
+  priority: core
+  base_weight: 0.18
+  stage_multiplier:
+    mvp_no_traction: 1.3
+    mvp_early_traction: 1.0
+  universal: true
+  scoring_logic:
+    mvp_no_traction:
+      green: "value >= 6"      # 6+ months = excellent
+      yellow: "3 <= value < 6" # 3-6 months = ok
+      red: "value < 3"         # <3 months = bad
+    mvp_early_traction:
+      green: "value >= 12"
+      yellow: "6 <= value < 12"
+      red: "value < 6"
+  confidence_method:
+    self_reported: 0.5
+    document_uploaded: 0.95  # Bank statement
+    ca_verified: 1.0         # CA-certified financials
+
+# EXAMPLE 3: Multiple Choice (Enum) Question
+example_enum:
+  question: "What is your exit strategy?"
+  type: enum
+  priority: recommended
+  base_weight: 0.12
+  stage_multiplier:
+    mvp_no_traction: 0.8
+    mvp_early_traction: 1.1
+  universal: true
+  scoring_logic:
+    mvp_no_traction:
+      green: "value IN (5to7yr_exit, 10plus_yr_build)"
+      yellow: "value == undecided"
+      red: "value IN (3yr_exit, lifestyle_business)"
+    mvp_early_traction:
+      green: "value IN (5to7yr_exit, 10plus_yr_build)"
+      yellow: "value == undecided"
+      red: "value IN (3yr_exit, lifestyle_business)"
+  confidence_method:
+    self_reported: 0.7
+    investor_discussion_notes: 0.9
+
+# EXAMPLE 4: Conditional Question (Only for Solo Founders)
+example_conditional:
+  question: "[SOLO ONLY] Do you have an advisory board?"
+  type: boolean
+  priority: core
+  base_weight: 0.14
+  stage_multiplier:
+    mvp_no_traction: 1.3
+    mvp_early_traction: 1.2
+  universal: false
+  conditional_trigger:
+    founder_structure: "== solo_founder"
+  scoring_logic:
+    mvp_no_traction:
+      green: "value == true"
+      yellow: "value == false"
+    mvp_early_traction:
+      green: "value == true"
+      red: "value == false"
+  confidence_method:
+    self_reported: 0.5
+    document_uploaded: 0.95  # Advisor agreements
+
+# EXAMPLE 5: Question with Fatal Flag
+example_fatal_flag:
+  question: "Is your company legally incorporated?"
+  type: boolean
+  priority: core
+  base_weight: 0.20
+  stage_multiplier:
+    mvp_no_traction: 1.0
+    mvp_early_traction: 1.5
+  universal: true
+  scoring_logic:
+    mvp_no_traction:
+      green: "value == true"
+      red: "value == false"
+    mvp_early_traction:
+      green: "value == true"
+      red: "value == false"
+  confidence_method:
+    self_reported: 0.5
+    document_uploaded: 1.0  # Incorporation certificate
+  fatal_flag:
+    is_fatal: true
+    condition: "value == false"
+    cascade_impact:
+      - category: legal
+        effect: auto_red
+      - category: execution
+        effect: reduce_confidence
+
+# EXAMPLE 6: Question with Skip Logic
+example_skip_logic:
+  question: "How many weeks of notice period remain?"
+  type: number
+  priority: recommended
+  base_weight: 0.06
+  stage_multiplier:
+    mvp_no_traction: 1.2
+    mvp_early_traction: 0.8
+  universal: true
+  skip_condition:
+    kpi_id: fc_fulltime_founder
+    value: true  # Skip if founder is already full-time
+  scoring_logic:
+    mvp_no_traction:
+      green: "value <= 4"
+      yellow: "4 < value <= 8"
+      red: "value > 8"
+    mvp_early_traction:
+      green: "value <= 2"
+      yellow: "2 < value <= 6"
+      red: "value > 6"
+  confidence_method:
+    self_reported: 0.7
+    document_uploaded: 1.0  # Employment contract
